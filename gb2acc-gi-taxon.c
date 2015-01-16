@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+unsigned gLineNumber = 0;
 static void printHelp(void) {
     printf("Extract:\nAccession <tab> GI <tab> ORGANISM\nfrom a GenBank flatfile.\n");
 }
-static void errmessage1(const char * fmt, const char * arg) { fprintf(stderr, fmt, arg); }
+static void errmessage1(const char * fmt, const char * arg) {fprintf(stderr, "warning from line %d: ", gLineNumber); fprintf(stderr, fmt, arg); }
 /*
  static void errmessage1d(const char * fmt, int arg) { fprintf(stderr, fmt, arg); }
 */
-static void errmessage1d1s(const char * fmt, int arg, const char * arg2) { fprintf(stderr, fmt, arg, arg2); }
+static void errmessage1d1s(const char * fmt, int arg, const char * arg2) { fprintf(stderr, "warning from line %d: ", gLineNumber); fprintf(stderr, fmt, arg, arg2); }
 #define MAX_LINE_LEN 200
 char gLineBuff[MAX_LINE_LEN];
 inline int startswith(const char * prefix, const unsigned int prefLen, const char * test, const unsigned int lineLen) {
@@ -19,6 +20,7 @@ inline int startswith(const char * prefix, const unsigned int prefLen, const cha
     return (strncmp(prefix, test, prefLen) == 0 ? 1 : 0);
 }
 char * getNextLine(FILE *f, unsigned int *lineLen, int *atEnd) {
+    gLineNumber += 1;
     if (fgets(gLineBuff, MAX_LINE_LEN, f) == 0L) {
         *atEnd = 1;
         return 0L;
