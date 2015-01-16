@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 unsigned gLineNumber = 0;
+unsigned gNumWarnings = 0;
 static void printHelp(void) {
     printf("Extract:\nAccession <tab> GI <tab> ORGANISM\nfrom a GenBank flatfile.\n");
 }
@@ -141,15 +142,14 @@ static unsigned int skimSourceFeatures(FILE * f, int * atEnd, unsigned int * nEr
     char taxonID[MAX_LINE_LEN];
     char * buffAlias;
     unsigned int lineLen;
-    int hadError = 0;
     for (;;) {
         buffAlias = getNextLine(f, &lineLen, atEnd); if (buffAlias == 0L) {if (*atEnd == 0) {*nErrors += 1;} return 0;}
         if (lineLen > 0 && isgraph(buffAlias[0])) {
-            break;
+            return 1;
         }
         if (lineLen > 5 && isgraph(buffAlias[5])) {
             if (!startswith("     source", SOURCE_FEATURE_LEN, buffAlias, lineLen)) {
-                break;
+                return 2;
             }
         }
         if (startswith("                     /db_xref=\"taxon:", TAXON_PREF_LEN, buffAlias, lineLen)) {
@@ -158,12 +158,11 @@ static unsigned int skimSourceFeatures(FILE * f, int * atEnd, unsigned int * nEr
                 printf("\t%s", taxonID);
             } else {
                 *nErrors += 1;
-                hadError = 1;
                 errmessage1("Could not parse a taxon ID out of \"%s\"\n", buffAlias);
             }
         }
     }
-    return (hadError ? 0 : 1);
+    return 1;
 }
 
 
@@ -171,18 +170,21 @@ static unsigned int skimSourceFeatures(FILE * f, int * atEnd, unsigned int * nEr
 static unsigned int skimFeatures(FILE * f, int * atEnd, unsigned int * nErrors, unsigned int * numTaxonIDs) {
     char * buffAlias;
     unsigned int lineLen;
+    unsigned rc;
+    unsigned incomingNumErrors = *nErrors;
     for (;;) {
         buffAlias = getNextLine(f, &lineLen, atEnd); if (buffAlias == 0L) {if (*atEnd == 0) {*nErrors += 1;} return 0;}
         if (lineLen > 0 && isgraph(buffAlias[0])) {
             break;
         }
         if (startswith("     source", SOURCE_FEATURE_LEN, buffAlias, lineLen)) {
-            if (!skimSourceFeatures(f, atEnd, nErrors, numTaxonIDs)) {
-                return 0;
+            rc = skimSourceFeatures(f, atEnd, nErrors, numTaxonIDs);
+            if (rc == 1) {
+                break;
             }
         }
     }
-    return 1;
+    return (*nErrors == incomingNumErrors ? 1 : 0);
 }
 
 static unsigned int readrecord(FILE *f, int *atEnd) {
@@ -206,8 +208,13 @@ static unsigned int readrecord(FILE *f, int *atEnd) {
                 errmessage1("EOR with no SOURCE. ACCESSION = %s\n", accessionField);
                 nErrors += 1;
             } else if (numTaxonIDs != 1) {
-                errmessage1d1s("EOR with %d taxon IDs found ACCESSION = %s.\n", numTaxonIDs, accessionField);
-                nErrors += 1;
+                if (numTaxonIDs > 1) {
+                    errmessage1d1s("EOR with %d taxon IDs found ACCESSION = %s\n", numTaxonIDs, accessionField);
+                    gNumWarnings += 1;
+                } else {
+                    errmessage1("EOR no taxon ID found in features table for ACCESSION = %s\n", accessionField);
+                    nErrors += 1;
+                }
             }
             break;
         } else if (startswith("VERSION", VERSION_LEN, buffAlias, lineLen)) {
