@@ -210,11 +210,10 @@ static unsigned int readrecord(FILE *f, int *atEnd) {
             } else if (numTaxonIDs != 1) {
                 if (numTaxonIDs > 1) {
                     errmessage1d1s("EOR with %d taxon IDs found ACCESSION = %s\n", numTaxonIDs, accessionField);
-                    gNumWarnings += 1;
                 } else {
                     errmessage1("EOR no taxon ID found in features table for ACCESSION = %s\n", accessionField);
-                    nErrors += 1;
                 }
+                gNumWarnings += 1;
             }
             break;
         } else if (startswith("VERSION", VERSION_LEN, buffAlias, lineLen)) {
