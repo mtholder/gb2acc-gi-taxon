@@ -9,19 +9,22 @@ for f in *.seq.xz
 do
     fn=$(echo $f | cut -d. -f1-2)
     echo $fn
-    uncompressed_file=0
-    if ! test -f "$fn"
+    if ! test -f "${fn}-ago.tsv"
     then
-        xz --decompress --stdout "$f" > "$fn" || exit
-        uncompressed_file=1
-    fi
-    if ! gb2acc-gi-taxon "$fn" > "${fn}-ago.tsv" 2>"${fn}-ago-err.txt"
-    then
-        echo "$fn" >> "$ff"
-    fi
-    if test $uncompressed_file -eq 1
-    then
-        rm "$fn"
+        uncompressed_file=0
+        if ! test -f "$fn"
+        then
+            xz --decompress --stdout "$f" > "$fn" || exit
+            uncompressed_file=1
+        fi
+        if ! gb2acc-gi-taxon "$fn" > "${fn}-ago.tsv" 2>"${fn}-ago-err.txt"
+        then
+            echo "$fn" >> "$ff"
+        fi
+        if test $uncompressed_file -eq 1
+        then
+            rm "$fn"
+        fi
     fi
     cat "${fn}-ago.tsv" >> "COMBINED-ago.tsv"
     cat "${fn}-ago-err.txt" >> "COMBINED-ago-err.txt"

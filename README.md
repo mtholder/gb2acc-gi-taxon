@@ -12,6 +12,7 @@ Takes an unzipped flat sequence file from genbank (e.g. ftp://ftp.ncbi.nih.gov/g
 # motivation
 
 I had no luck with the GBParsy based parser at https://gist.github.com/mtholder/035eed5d9ed3e4ff6816
+
 It was refusing to parse many GenBank files.
 
 So this is very simple parser that just tries to pull out the 
