@@ -10,7 +10,7 @@ rm -f "$finaltsv" "$finalerr"
 for d in $(cat "$rsd")
 do
     cd $d
-    create-ago.sh || exit
+    create-ago-xz.sh || exit
     cd -
     cat "${d}/${combotsv}" >> "${finaltsv}"
     cat "${d}/${comboerr}" >> "${finalerr}"
